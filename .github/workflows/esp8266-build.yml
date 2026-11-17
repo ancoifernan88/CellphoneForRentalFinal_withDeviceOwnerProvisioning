@@ -1,0 +1,48 @@
+
+name: ANGKOY ESP8266 BIN Compiler
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'CellphoneForRentalCentrlizeFinally.ino'
+      - '.github/workflows/esp8266-build.yml'
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install ESP8266 board package
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp8266:esp8266
+
+      - name: Prepare sketch
+        run: |
+          mkdir -p build/CellphoneForRentalCentrlizeFinally
+          cp CellphoneForRentalCentrlizeFinally.ino build/CellphoneForRentalCentrlizeFinally/
+
+      - name: Compile ESPino ESP-12
+        run: |
+          mkdir -p output
+          arduino-cli compile \
+            --fqbn esp8266:esp8266:espino \
+            --export-binaries \
+            --output-dir output \
+            build/CellphoneForRentalCentrlizeFinally
+
+      - name: Upload firmware BIN
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANGKOY-ESP8266-Firmware
+          path: output/*.bin
+          if-no-files-found: error
